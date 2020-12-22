@@ -8,6 +8,7 @@ $params = array_merge(
 
 return [
     'id' => 'app-backend',
+    'homeUrl' => '/',
     'basePath' => dirname(__DIR__),
     'controllerNamespace' => 'backend\controllers',
     'bootstrap' => ['log'],
@@ -15,6 +16,7 @@ return [
     'components' => [
         'request' => [
             'csrfParam' => '_csrf-backend',
+            'baseUrl' => '',
         ],
         'user' => [
             'identityClass' => 'common\models\User',
@@ -37,14 +39,21 @@ return [
         'errorHandler' => [
             'errorAction' => 'site/error',
         ],
-        /*
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
+            // 'class' => 'codemix\localeurls\UrlManager',
+            // 'languages' => ['en', 'ru'],
+            // 'enableDefaultLanguageUrlCode' => true,
+            'suffix' => '.html',
             'rules' => [
+                // 'admin/<controller>/<action>/<id:\d+>/' => 'admin/<controller>/<action>/',
+                // '/admin' => 'admin/default',
+                // '/warehouse/order/<event>' => 'warehouse/order',
+                // '/catalog/order/<event>' => 'catalog/order',
             ],
         ],
-        */
+        
     ],
     'params' => $params,
 ];

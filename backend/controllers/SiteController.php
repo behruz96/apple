@@ -1,11 +1,15 @@
 <?php
 namespace backend\controllers;
 
+use backend\models\AppleSearch;
 use Yii;
+use yii\helpers\Url;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use common\models\LoginForm;
+use backend\models\Apple;
+use yii\web\NotFoundHttpException;
 
 /**
  * Site controller
@@ -26,7 +30,7 @@ class SiteController extends Controller
                         'allow' => true,
                     ],
                     [
-                        'actions' => ['logout', 'index'],
+                        'actions' => ['logout', 'index', 'create'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -53,14 +57,28 @@ class SiteController extends Controller
         ];
     }
 
-    /**
-     * Displays homepage.
-     *
-     * @return string
-     */
+
     public function actionIndex()
     {
-        return $this->render('index');
+        $searchModel = new AppleSearch();
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+
+        return $this->render('index', [
+            'searchModel' => $searchModel,
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+
+    public function actionCreate()
+    {
+        $colors=['green','red','yellow'];
+        $model=new Apple();
+        $model->color=$colors[(int)rand(0,2)];
+        $model->size=100;
+        $model->quantity=(int)rand(1,15);
+//        $model->date_appearance=date('Y-m-d');
+        $model->status=0;
+        if ($model->save()) $this->redirect(Url::to(['site/index']));
     }
 
     /**
@@ -98,5 +116,13 @@ class SiteController extends Controller
         Yii::$app->user->logout();
 
         return $this->goHome();
+    }
+    protected function findModel($id)
+    {
+        if (($model = Apple::findOne(['idapple' => $id])) !== null) {
+            return $model;
+        } else {
+            throw new NotFoundHttpException('The requested page does not exist.');
+        }
     }
 }
