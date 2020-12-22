@@ -1,14 +1,15 @@
 <?php
+
 namespace backend\controllers;
 
+use backend\models\Apple;
 use backend\models\AppleSearch;
+use common\models\LoginForm;
 use Yii;
+use yii\filters\AccessControl;
+use yii\filters\VerbFilter;
 use yii\helpers\Url;
 use yii\web\Controller;
-use yii\filters\VerbFilter;
-use yii\filters\AccessControl;
-use common\models\LoginForm;
-use backend\models\Apple;
 use yii\web\NotFoundHttpException;
 
 /**
@@ -30,7 +31,7 @@ class SiteController extends Controller
                         'allow' => true,
                     ],
                     [
-                        'actions' => ['logout', 'index', 'create'],
+                        'actions' => ['logout', 'index', 'create', 'fall', 'eat', 'delete'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -71,14 +72,41 @@ class SiteController extends Controller
 
     public function actionCreate()
     {
-        $colors=['green','red','yellow'];
-        $model=new Apple();
-        $model->color=$colors[(int)rand(0,2)];
-        $model->size=100;
-        $model->quantity=(int)rand(1,15);
-//        $model->date_appearance=date('Y-m-d');
-        $model->status=0;
+        for ($i = 0; $i <= (int)rand(0, 5); $i++) {
+            $model = new Apple();
+            $model->save();
+        }
+        $this->redirect(Url::to(['site/index']));
+    }
+
+    public function actionFall($id)
+    {
+        $model = $this->findModel($id);
+        $model->fallToGroud();
         if ($model->save()) $this->redirect(Url::to(['site/index']));
+    }
+
+    protected function findModel($id)
+    {
+        if (($model = Apple::findOne(['idapple' => $id])) !== null) {
+            return $model;
+        } else {
+            throw new NotFoundHttpException('The requested page does not exist.');
+        }
+    }
+
+    public function actionEat($id, $percent)
+    {
+        $model = $this->findModel($id);
+        $model->eat($percent);
+        $this->redirect(Url::to(['site/index']));
+    }
+
+    public function actionDelete($id)
+    {
+        $model = $this->findModel($id);
+        $model->delete();
+        $this->redirect(Url::to(['site/index']));
     }
 
     /**
@@ -116,13 +144,5 @@ class SiteController extends Controller
         Yii::$app->user->logout();
 
         return $this->goHome();
-    }
-    protected function findModel($id)
-    {
-        if (($model = Apple::findOne(['idapple' => $id])) !== null) {
-            return $model;
-        } else {
-            throw new NotFoundHttpException('The requested page does not exist.');
-        }
     }
 }

@@ -21,39 +21,12 @@ namespace backend\models;
  */
 
 use Yii;
+use yii\behaviors\AttributeBehavior;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
 
 class Apple extends ActiveRecord
 {
-    public function init(){
-        $this->on(ActiveRecord::EVENT_AFTER_FIND,function ($event){
-            if($this->date_fall!=null){
-                $now_datetime = \DateTime::createFromFormat('Y-m-d G:i:s', date('Y-m-d G:i:s'));
-                $date_fall = \DateTime::createFromFormat('Y-m-d G:i:s', $this->date_fall);
-                $diff = $now_datetime->diff($date_fall);
-                if ($diff->h>=5){
-                    $this->status="2";
-                    if($this->save()) $event->handled = true;
-                }else $event->handled = false;
-            }
-        });
-        parent::init();
-    }
-
-    public function behaviors()
-    {
-        return [
-            [
-                'class' => TimestampBehavior::className(),
-                'attributes' => [
-                    ActiveRecord::EVENT_BEFORE_INSERT => ['date_appearance'],
-                ],
-                // if you're using datetime instead of UNIX timestamp:
-                'value' => date('Y-m-d G:i:s'),
-            ],
-        ];
-    }
 
     public static function tableName()
     {
@@ -65,16 +38,64 @@ class Apple extends ActiveRecord
         return new AppleQuery(get_called_class());
     }
 
+    public function behaviors()
+    {
+        return [
+            [
+                'class' => TimestampBehavior::className(),
+                'attributes' => [ActiveRecord::EVENT_BEFORE_INSERT => 'date_appearance'],
+                'value' => date('Y-m-d G:i:s', time() - 3600 * 24 * (int)rand(55, 60)),
+            ],
+            [
+                'class' => AttributeBehavior::className(),
+                'attributes' => [ActiveRecord::EVENT_BEFORE_INSERT => 'color'],
+                'value' => function ($event) {
+                    $colors = ['green', 'red', 'yellow'];
+                    return $colors[(int)rand(0, 2)];
+                }
+            ],
+            [
+                'class' => AttributeBehavior::className(),
+                'attributes' => [ActiveRecord::EVENT_BEFORE_INSERT => 'size'],
+                'value' => 100,
+            ],
+            [
+                'class' => AttributeBehavior::className(),
+                'attributes' => [ActiveRecord::EVENT_BEFORE_UPDATE => 'date_fall'],
+                'value' => function () {
+                    if ($this->status == '1' && $this->date_fall==null) {
+                        return date('Y-m-d G:i:s');
+                    } else return $this->date_fall;
+                },
+            ],
+            [
+                'class' => AttributeBehavior::className(),
+                'attributes' => [
+                    ActiveRecord::EVENT_AFTER_FIND => 'status',
+                    ActiveRecord::EVENT_BEFORE_UPDATE => 'status',
+                ],
+                'value' => function ($event) {
+                    if ($this->date_fall != null) {
+                        $now_datetime = \DateTime::createFromFormat('Y-m-d G:i:s', date('Y-m-d G:i:s'));
+                        $date_fall = \DateTime::createFromFormat('Y-m-d G:i:s', $this->date_fall);
+                        $diff = $now_datetime->diff($date_fall);
+                    }
+                    if ($this->status == '1' && $diff->h >= 5) {
+                        return "2";
+                    } else return $this->status;
+                },
+            ],
+        ];
+    }
+
     public function rules()
     {
         return [
-            [['color', 'status', 'size', 'quantity'], 'required'],
             [['color'], 'string', 'max' => 10],
             [['date_appearance', 'date_fall'], 'safe'],
             ['status', 'default', 'value' => "0"],
             ['status', 'in', 'range' => ["0", "1", "2"]],
             [['size'], 'number'],
-            [['quantity'], 'integer'],
         ];
     }
 
@@ -87,18 +108,18 @@ class Apple extends ActiveRecord
             'date_fall' => Yii::t('app', 'Date Fall'),
             'status' => Yii::t('app', 'Status'),
             'size' => Yii::t('app', 'Size'),
-            'quantity' => Yii::t('app', 'Quantity'),
         ];
     }
 
     public function eat($percent)
     {
-        if ($this->status != "0" || $this->status != "2") {
+        if ($this->status != "0" && $this->status != "2") {
             if ($percent <= $this->size) {
                 $this->size = $this->size - $percent;
-                if ($this->save()) return $this->size;
+                if($this->size==0) $this->delete();
+                else return $this->save();
             } else {
-                if ($this->delete()) return "съедено";
+                $this->delete();
             }
         } else {
             $echo = "Съесть нельзя";

@@ -16,7 +16,7 @@ class AppleSearch extends Apple
     public function rules()
     {
         return [
-            [['idapple','quantity'], 'integer'],
+            [['idapple'], 'integer'],
             [['date_appearance', 'date_fall', 'status'], 'safe'],
             [['color'], 'string', 'max' => 10],
             [['size',], 'number'],
@@ -52,7 +52,6 @@ class AppleSearch extends Apple
 
         $query->andFilterWhere([
             'idapple' => $this->idapple,
-            'quantity' => $this->quantity,
             'size' => $this->size,
         ]);
 
