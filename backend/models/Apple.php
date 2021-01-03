@@ -9,7 +9,7 @@
 namespace backend\models;
 
 /**
- * This is the model class for table "warehouse".
+ * This is the model class for table "apple".
  *
  * @property int $idapple
  * @property string $color
@@ -119,7 +119,7 @@ class Apple extends ActiveRecord
                 if($this->size==0) $this->delete();
                 else return $this->save();
             } else {
-                $this->delete();
+                return $this->delete();
             }
         } else {
             $echo = "Съесть нельзя";
